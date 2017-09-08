@@ -5,24 +5,19 @@ import { Geolocation } from '@ionic-native/geolocation';
 import 'rxjs/add/operator/map';
 
 declare var google;
-//Cria um array em branco para toda lista de marcadores
 var markers = [];
 
 var locations = [
-  {title: 'Park Ave Penthouse', location: {lat: 40.7713024, lng: -73.9632393}},
-  {title: 'Chelsea Loft', location: {lat: 40.7444883, lng: -73.9949465}},
-  {title: 'Union Square Open Floor Plan', location: {lat: 40.7347062, lng: -73.9895759}},
-  {title: 'East Village Hip Studio', location: {lat: 40.7281777, lng: -73.984377}},
-  {title: 'TriBeCa Artsy Bachelor Pad', location: {lat: 40.7195264, lng: -74.0089934}},
-  {title: 'Chinatown Homey Space', location: {lat: 40.7180628, lng: -73.9961237}}
+  {title: '38ª Delegacia de Polícia', location: {lat: -15.815542, lng: -48.017748}},
+  {title: 'Superbom Supermercado', location: {lat: -15.816407, lng: -48.015820}},
+  {title: 'Cond. Por do Sol', location: {lat: -15.815848, lng: -48.018634}}
 ];
+
 
 @Component({
   selector: 'page-home',
   templateUrl: 'home.html'
 })
-
-
 export class HomePage {
 
   posts: any;
@@ -64,12 +59,15 @@ export class HomePage {
     this.geolocation.getCurrentPosition().then((position) => {
 
       let latLng = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+      var largeInfowindow = new google.maps.InfoWindow();
+
 
       let mapOptions = {
         center: latLng,
         zoom: 15,
-        mapTypeId: google.maps.MapTypeId.ROADMAP
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
       }
+
 
       this.map = new google.maps.Map(this.mapElement.nativeElement, mapOptions);
 
@@ -81,32 +79,51 @@ export class HomePage {
 
 
 
-addMarker(){
+  addMarker(){
+    var bounds = new google.maps.LatLngBounds();
+    for (var i = 0; i < locations.length; i++) {
+      let marker = new google.maps.Marker({
+        map: this.map,
+        animation: google.maps.Animation.DROP,
+        position: locations[i].location,
+        title: locations[i].title,
+        id: i
+      });
+      //this.addInfoWindow(marker, "<h4>Information!</h4>");
+      markers.push(marker);
 
-  let marker = new google.maps.Marker({
-    map: this.map,
-    animation: google.maps.Animation.DROP,
-    position: this.map.getCenter(),
-    title: "Minha casa"
-  });
+      this.addInfoWindow(marker, "<h4>Information!</h4>");
 
-  let content = "<h4>Information!</h4>";
+      bounds.extend(markers[i].position);
+    }
+    this.map.fitBounds(bounds);
+  }
 
-  this.addInfoWindow(marker, content);
 
-}
+  populateInfoWindow(marker, infowindow) {
+    // Check to make sure the infowindow is not already opened on this marker.
+    if (infowindow.marker != marker) {
+      infowindow.marker = marker;
+      infowindow.setContent('<div>' + marker.title + '</div>');
+      infowindow.open(this.map, marker);
+      // Make sure the marker property is cleared if the infowindow is closed.
+      infowindow.addListener('closeclick',function(){
+        infowindow.setMarker = null;
+      });
+    }
+  }
+  addInfoWindow(marker, content){
 
-addInfoWindow(marker, content){
+    let infoWindow = new google.maps.InfoWindow({
 
-  let infoWindow = new google.maps.InfoWindow({
-    content: content
-  });
+      content: '<div>' + marker.title + '</div>'
+    });
 
-  google.maps.event.addListener(marker, 'click', () => {
-    infoWindow.open(this.map, marker);
-  });
+    google.maps.event.addListener(marker, 'click', () => {
+      infoWindow.open(this.map, marker);
+    });
 
-}
 
+  }
 
 }
